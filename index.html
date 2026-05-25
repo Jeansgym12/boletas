@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Boletas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f1f5f9;--surface:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;
+  --header:#0f172a;--accent:#22d3ee;
+  --g:#065f46;--g-bg:#d1fae5;--g-bd:#6ee7b7;
+  --yg:#3730a3;--yg-bg:#ede9fe;--yg-bd:#a5b4fc;
+  --a:#1e3a8a;--a-bg:#dbeafe;--a-bd:#93c5fd;
+  --ay:#854d0e;--ay-bg:#fef9c3;--ay-bd:#fde047;
+  --rev:#9a3412;--rev-bg:#ffedd5;--rev-bd:#fdba74;
+  --anu:#374151;--anu-bg:#f3f4f6;--anu-bd:#d1d5db;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* BANNER */
+.lock-banner{background:#1e293b;color:#94a3b8;text-align:center;padding:.5rem 1rem;font-size:12px;border-bottom:1px solid #334155}
+.lock-banner span{color:#22d3ee;font-weight:600}
+
+/* HEADER */
+header{background:var(--header);color:#fff;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;border-bottom:3px solid var(--accent)}
+header h1{font-size:1.1rem;font-weight:600}
+.hinfo{font-size:11px;color:#94a3b8;font-family:'DM Mono',monospace;margin-top:2px}
+.hbtns{display:flex;gap:7px;flex-wrap:wrap}
+
+/* TABS */
+.tabs-wrap{background:var(--header);padding:0 1.2rem;border-bottom:1px solid #1e293b;display:flex;align-items:center;overflow-x:auto}
+.tab{padding:.6rem 1rem;font-size:12px;font-weight:500;color:#94a3b8;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;gap:5px}
+.tab:hover{color:#e2e8f0}.tab.active{color:#fff;border-bottom-color:var(--accent)}
+.tab-x{font-size:10px;color:#64748b;cursor:pointer;padding:1px 3px;border-radius:3px}
+.tab-x:hover{color:#ef4444;background:rgba(239,68,68,.15)}
+.tab-add{padding:.5rem .8rem;font-size:16px;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;flex-shrink:0}
+.tab-add:hover{color:#22d3ee}
+
+/* MAIN */
+.main{max-width:1150px;margin:0 auto;padding:1.2rem 1.2rem 3rem}
+
+/* BUTTONS */
+.btn{padding:7px 16px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-hdr{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2)}.btn-hdr:hover{background:rgba(255,255,255,.22)}
+.btn-accent{background:#22d3ee;color:#0f172a}.btn-accent:hover{background:#06b6d4}
+.btn-dark{background:#f1f5f9;color:#0f172a;border:1px solid var(--border)}.btn-dark:hover{background:#e2e8f0}
+.btn-danger{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}.btn-danger:hover{background:#fca5a5}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:6px}
+.btn-lock{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25)}
+
+/* FORM CARD */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.2rem}
+.form-card h2{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.8rem}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;align-items:end}
+.fg label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.fg input,.fg select{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fff;color:var(--text);outline:none;transition:border .15s}
+.fg input:focus,.fg select:focus{border-color:var(--accent)}
+
+/* RESUMEN */
+.resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:8px;margin-bottom:1.2rem}
+.rcard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.7rem .85rem;cursor:pointer;transition:box-shadow .15s;user-select:none}
+.rcard:hover{box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.rcard.active{outline:2px solid var(--accent)}
+.rcard-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.rcard-count{font-size:1.35rem;font-weight:600;line-height:1;margin-bottom:2px}
+.rcard-total{font-size:11px;font-family:'DM Mono',monospace}
+
+/* BAR */
+.bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:.8rem}
+.chip{font-size:11px;padding:3px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:500;transition:all .12s}
+.chip:hover{background:#f1f5f9}.chip.active{background:var(--header);color:#fff;border-color:var(--header)}
+.search{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;width:180px}
+.search:focus{border-color:var(--accent)}
+
+/* TABLA */
+.tabla-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:#1e293b;color:#94a3b8;padding:9px 12px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;font-family:'DM Mono',monospace}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s}
+tbody tr:hover{background:#f8fafc}
+tbody tr:last-child{border-bottom:none}
+td{padding:8px 12px}
+td.mono{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+td.monto{font-family:'DM Mono',monospace;text-align:right;font-weight:500}
+tfoot tr{background:#1e293b}
+tfoot td{padding:9px 12px;color:#e2e8f0;font-weight:600;font-size:12px;font-family:'DM Mono',monospace}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.04em}
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:12px}
+.tipo-tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:999px;background:#f1f5f9;color:var(--muted)}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:1.4rem;width:90%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.18);max-height:90vh;overflow-y:auto}
+.modal h3{font-size:14px;font-weight:600;margin-bottom:1rem}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.5rem}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
+.imp-area{width:100%;height:110px;font-size:12px;font-family:'DM Mono',monospace;padding:8px;border:1px solid var(--border);border-radius:8px;resize:vertical;background:#f8fafc;color:var(--text)}
+.tip{font-size:11px;color:var(--muted);margin-bottom:.7rem;line-height:1.6}
+.pw-err{color:#ef4444;font-size:11px;margin-bottom:.5rem}
+
+/* PRINT */
+@media print{
+  .lock-banner,.tabs-wrap,.form-card,.bar,.btn,.chip,.search,.no-print{display:none!important}
+  body{background:#fff}.tabla-wrap{border:none}
+  thead th{background:#0f172a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(max-width:600px){.main{padding:.8rem}.resumen{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- ============ BANNER ============ -->
+<div class="lock-banner" id="banner">
+  Modo <span>Solo lectura</span> — Solo el administrador puede editar.
+  <button class="btn btn-sm btn-lock" style="margin-left:8px" onclick="showPwModal()">Ingresar como Admin</button>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div>
+    <h1>📋 Sistema de Boletas</h1>
+    <div class="hinfo" id="hinfo">Cargando...</div>
+  </div>
+  <div class="hbtns no-print" id="hbtns">
+    <button class="btn btn-hdr" onclick="window.print()">🖨 Imprimir</button>
+    <button class="btn btn-hdr" onclick="exportarCSV()">⬇ CSV</button>
+  </div>
+</header>
+
+<!-- ============ TABS ============ -->
+<div class="tabs-wrap no-print">
+  <div class="tab active" onclick="cambiarVista('todas',this)">Todas</div>
+  <div id="tabsDinamicos"></div>
+  <div class="tab-add" id="tabAdd" onclick="abrirNuevoTipo()" title="Agregar tipo" style="display:none">＋</div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+
+  <!-- FORM AGREGAR (solo admin) -->
+  <div class="form-card no-print" id="formAgregar" style="display:none">
+    <h2>➕ Agregar boleta</h2>
+    <div class="form-grid">
+      <div class="fg"><label>N° Boleta</label><input type="text" id="f_boleta" placeholder="12601"></div>
+      <div class="fg"><label>Monto (S/)</label><input type="number" id="f_monto" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label>Tipo</label><select id="f_tipo"></select></div>
+      <div class="fg"><label>Cobro</label><select id="f_cobro">
+        <option value="G">Gloria · efectivo</option><option value="YAPE G">Yape Gloria</option>
+        <option value="A">Angeli · efectivo</option><option value="A YAPE">Yape Angeli</option>
+        <option value="REVISAR">⚠ Revisar</option><option value="ANULADO">✗ Anulado</option>
+      </select></div>
+      <div class="fg"><label>Nota</label><input type="text" id="f_nota" placeholder="opcional"></div>
+      <div class="fg" style="display:flex;align-items:flex-end">
+        <button class="btn btn-accent" style="width:100%" onclick="agregarBoleta()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="resumen" id="resumen"></div>
+
+  <!-- BARRA FILTROS -->
+  <div class="bar no-print">
+    <div id="chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <input class="search" type="text" id="buscar" placeholder="Buscar boleta..." oninput="renderTabla()">
+  </div>
+
+  <!-- TABLA -->
+  <div class="tabla-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Boleta</th><th>Tipo</th><th style="text-align:right">Monto</th>
+          <th>Cobro</th><th>Nota</th><th class="no-print" id="thAcciones" style="display:none">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+      <tfoot id="tfoot"></tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- ============ MODAL CONTRASEÑA ============ -->
+<div class="overlay" id="pwOverlay">
+  <div class="modal" style="max-width:340px">
+    <h3>🔐 Acceso de administrador</h3>
+    <p class="tip">Ingresa la contraseña para activar el modo edición.</p>
+    <div class="fg" style="margin-bottom:.7rem">
+      <label>Contraseña</label>
+      <input type="password" id="pwInput" onkeydown="if(event.key==='Enter')checkPw()">
+    </div>
+    <p class="pw-err" id="pwErr" style="display:none">Contraseña incorrecta.</p>
+    <div class="modal-foot">
+      <button class="btn btn-dark" onclick="cerrarPwModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="checkPw()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL EDITAR ============ -->
+<div class="overlay" id="modalEditar">
+  <div class="modal">
+    <h3>✏️ Editar boleta</h3>
+    <div class="modal-grid">
+      <div class="fg"><label>N° Boleta</label><input type="text" id="e_boleta"></div>
+      <div class="fg"><label>Monto (S/)</label><input type="number" id="e_monto" step="0.01"></div>
+      <div class="fg"><label>Tipo</label><select id="e_tipo"></select></div>
+      <div class="fg"><label>Cobro</label><select id="e_cobro">
+        <option value="G">Gloria · efectivo</option><option value="YAPE G">Yape Gloria</option>
+        <option value="A">Angeli · efectivo</option><option value="A YAPE">Yape Angeli</option>
+        <option value="REVISAR">⚠ Revisar</option><option value="ANULADO">✗ Anulado</option>
+      </select></div>
+      <div class="fg" style="grid-column:1/-1"><label>Nota</label><input type="text" id="e_nota"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-dark" onclick="cerrarModal('modalEditar')">Cancelar</button>
+      <button class="btn btn-accent" onclick="guardarEdicion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL IMPORTAR ============ -->
+<div class="overlay" id="modalImportar">
+  <div class="modal">
+    <h3>⬆ Importar datos</h3>
+    <p class="tip">Pega filas desde Excel: <code>N°boleta TAB monto TAB cobro</code><br>El cobro se clasifica automáticamente.</p>
+    <div class="fg" style="margin-bottom:.7rem"><label>Tipo de boleta</label><select id="imp_tipo"></select></div>
+    <textarea class="imp-area" id="imp_data" placeholder="12601&#9;76&#9;G&#10;12602&#9;155&#9;YAPE G"></textarea>
+    <div class="modal-foot">
+      <button class="btn btn-dark" onclick="cerrarModal('modalImportar')">Cancelar</button>
+      <button class="btn btn-accent" onclick="ejecutarImportar()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL NUEVO TIPO ============ -->
+<div class="overlay" id="modalNuevoTipo">
+  <div class="modal" style="max-width:340px">
+    <h3>➕ Nuevo tipo de boleta</h3>
+    <div class="fg" style="margin-bottom:1rem">
+      <label>Nombre</label>
+      <input type="text" id="nt_nombre" placeholder="Ej: Uniforme 3" onkeydown="if(event.key==='Enter')guardarNuevoTipo()">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-dark" onclick="cerrarModal('modalNuevoTipo')">Cancelar</button>
+      <button class="btn btn-accent" onclick="guardarNuevoTipo()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL ELIMINAR TIPO ============ -->
+<div class="overlay" id="modalElimTipo">
+  <div class="modal" style="max-width:360px">
+    <h3>⚠️ Eliminar tipo de boleta</h3>
+    <p class="tip" id="elimTipoMsg"></p>
+    <div class="modal-foot">
+      <button class="btn btn-dark" onclick="cerrarModal('modalElimTipo')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarElimTipo()">Eliminar todo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  CONFIGURACIÓN — cambia solo estas dos líneas si quieres
+// ============================================================
+const ADMIN_PASSWORD = 'admin2025';   // ← tu contraseña
+const DB_KEY         = 'boletas_v4';
+const TIPO_KEY       = 'tipos_v4';
+// ============================================================
+
+const COBROS = {
+  'G':       {label:'Gloria',      color:'var(--g)',   bg:'var(--g-bg)',   bd:'var(--g-bd)'},
+  'YAPE G':  {label:'Yape Gloria', color:'var(--yg)',  bg:'var(--yg-bg)',  bd:'var(--yg-bd)'},
+  'A':       {label:'Angeli',      color:'var(--a)',   bg:'var(--a-bg)',   bd:'var(--a-bd)'},
+  'A YAPE':  {label:'Yape Angeli', color:'var(--ay)',  bg:'var(--ay-bg)',  bd:'var(--ay-bd)'},
+  'REVISAR': {label:'Revisar',     color:'var(--rev)', bg:'var(--rev-bg)', bd:'var(--rev-bd)'},
+  'ANULADO': {label:'Anulado',     color:'var(--anu)', bg:'var(--anu-bg)', bd:'var(--anu-bd)'},
+};
+
+function load(k,def){try{return JSON.parse(localStorage.getItem(k))||def;}catch(e){return def;}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v));}
+
+let db    = load(DB_KEY, null);
+let tipos = load(TIPO_KEY, null);
+let isAdmin = false;
+let vistaActiva  = 'todas';
+let filtroActivo = 'TODOS';
+let editandoId   = null;
+let elimTipoId   = null;
+
+if (!tipos) {
+  tipos = [{id:'uniforme1',label:'Uniforme 1'},{id:'uniforme2',label:'Uniforme 2'},{id:'normal',label:'Normal'}];
+  save(TIPO_KEY, tipos);
+}
+
+if (!db) {
+  const u1=[[12601,76,'G',''],[12602,0,'G','Cafetin 450'],[12603,155,'YAPE G',''],[12604,253,'YAPE G','40 yape Gloria'],[12605,40,'YAPE G',''],[12606,106,'G',''],[12607,315,'G',''],[12608,294,'YAPE G',''],[12609,342,'G',''],[12610,90,'YAPE G',''],[12611,172,'G',''],[12612,313,'G',''],[12613,243,'G',''],[12614,180,'G',''],[12615,106,'G',''],[12616,162,'YAPE G',''],[12617,86,'G',''],[12618,110,'G',''],[12619,174,'REVISAR',''],[12620,329,'G',''],[12621,0,'ANULADO','X'],[12622,112,'G',''],[12623,203,'G',''],[12624,356,'G',''],[12625,38,'A',''],[12626,274,'A',''],[12627,198,'YAPE G',''],[12628,52,'YAPE G',''],[12629,164,'A',''],[12630,345,'YAPE G',''],[12631,345,'REVISAR',''],[12632,346,'YAPE G',''],[12633,35,'YAPE G',''],[12634,22,'A YAPE',''],[12635,42,'A',''],[12636,171,'YAPE G',''],[12637,152,'A',''],[12638,13,'A',''],[12639,90,'A',''],[12640,208,'YAPE G',''],[12641,0,'ANULADO','X'],[12642,128,'REVISAR',''],[12643,118,'A',''],[12644,48,'YAPE G',''],[12645,60,'A',''],[12646,90,'A',''],[12647,70,'A',''],[12648,405,'YAPE G',''],[12649,46,'A',''],[12650,160,'YAPE G',''],[12651,152,'YAPE G',''],[12652,88,'A',''],[12653,22,'A',''],[12654,80,'YAPE G',''],[12655,56,'A',''],[12656,158,'YAPE G',''],[12657,200,'A',''],[12658,42,'A YAPE',''],[12659,312,'YAPE G',''],[12660,108,'YAPE G',''],[12661,250,'A',''],[12662,56,'REVISAR',''],[12663,187,'YAPE G',''],[12664,529,'REVISAR',''],[12665,146,'A',''],[12666,230,'YAPE G',''],[12667,108,'G',''],[12668,22,'A',''],[12669,125,'YAPE G',''],[12670,223,'YAPE G',''],[12671,13,'A',''],[12672,20,'A',''],[12673,66,'YAPE G',''],[12674,13,'A',''],[12675,173,'A',''],[12676,208,'A',''],[12677,138,'YAPE G',''],[12678,154,'G',''],[12679,0,'REVISAR','X'],[12680,166,'YAPE G',''],[12681,52,'A',''],[12682,58,'A',''],[12683,12,'A',''],[12684,20,'A',''],[12685,20,'A',''],[12686,294,'YAPE G',''],[12687,174,'A',''],[12688,177,'REVISAR',''],[12689,48,'YAPE G',''],[12690,213,'YAPE G',''],[12691,132,'REVISAR',''],[12692,13,'YAPE G',''],[12693,48,'A',''],[12694,48,'A',''],[12695,88,'YAPE G',''],[12696,40,'ANULADO',''],[12697,56,'YAPE G',''],[12698,103,'A',''],[12699,95,'YAPE G',''],[12700,8,'A',''],[12709,126,'A',''],[12710,100,'A',''],[12711,0,'ANULADO','X'],[12712,65,'YAPE G',''],[12713,0,'ANULADO','X'],[12714,39,'YAPE G','']];
+  const u2=[[12901,20,'A',''],[12902,20,'A',''],[12903,19,'A',''],[12904,78,'YAPE G',''],[12905,291,'YAPE G',''],[12906,87,'A',''],[12907,51,'A',''],[12908,74,'A',''],[12909,0,'ANULADO','X'],[12910,80,'A',''],[12911,44,'A',''],[12912,249,'REVISAR',''],[12913,42,'YAPE G',''],[12914,44,'A',''],[12915,10,'A',''],[12916,22,'A',''],[12917,27,'A',''],[12918,0,'ANULADO','X'],[12919,0,'ANULADO','X'],[12920,20,'A YAPE','YAPE ANGIE'],[12921,33,'A',''],[12922,22,'A',''],[12923,10,'A',''],[12924,20,'YAPE G',''],[12925,18,'A',''],[12926,105,'G',''],[12927,86,'G',''],[12928,14,'YAPE G',''],[12929,12,'A YAPE','YAPE ANGIE'],[12930,8,'A',''],[12931,13,'A',''],[12932,14,'A',''],[12933,20,'YAPE G',''],[12934,0,'ANULADO','X'],[12935,86,'A',''],[12936,158,'A',''],[12937,103,'YAPE G',''],[12938,44,'YAPE G',''],[12939,74,'A',''],[12940,34,'YAPE G',''],[12941,44,'YAPE G',''],[12942,48,'YAPE G',''],[12943,0,'ANULADO','X'],[12944,0,'ANULADO','X'],[12945,54,'A YAPE','YAPE ANGIE'],[12946,270,'A',''],[12947,0,'ANULADO','X'],[12948,0,'ANULADO','X'],[12949,106,'YAPE G',''],[12950,44,'A',''],[12951,0,'ANULADO','X'],[12952,0,'ANULADO','X'],[12953,55,'A',''],[12954,0,'ANULADO','X'],[12955,10,'A',''],[12956,0,'ANULADO','X'],[12957,0,'ANULADO','X'],[12958,0,'ANULADO','X'],[12959,0,'ANULADO','X'],[12960,8,'A',''],[12961,12,'YAPE G',''],[12962,13,'A',''],[12963,48,'REVISAR','A Ojo'],[12964,48,'REVISAR','Ojo'],[12965,36,'A YAPE','YAPE ANGIE'],[12966,22,'A','']];
+  const now=new Date().toISOString();
+  db=[
+    ...u1.map(r=>({id:Date.now()+Math.random(),boleta:r[0],monto:r[1],cobro:r[2],tipo:'uniforme1',nota:r[3],fecha:now})),
+    ...u2.map(r=>({id:Date.now()+Math.random(),boleta:r[0],monto:r[1],cobro:r[2],tipo:'uniforme2',nota:r[3],fecha:now})),
+  ];
+  save(DB_KEY, db);
+}
+
+function clasificarAuto(c){
+  c=(c||'').toString().trim().toUpperCase().replace(/\s+/g,' ');
+  if(!c)return'REVISAR';if(c==='X'||c==='ANULADO')return'ANULADO';
+  if(c==='OJO'||c==='REVISAR'||c.includes('OJO'))return'REVISAR';
+  if(c==='A YAPE'||c==='AYAPE'||c.includes('YAPE ANGI'))return'A YAPE';
+  if(c.includes('YAPE')&&(c.includes('G')||c.includes('GLORIA')))return'YAPE G';
+  if(c==='G'||c==='GLORIA')return'G';if(c==='A'||c==='ANGELI')return'A';
+  return'REVISAR';
+}
+
+/* ------ ADMIN ------ */
+function showPwModal(){document.getElementById('pwInput').value='';document.getElementById('pwErr').style.display='none';document.getElementById('pwOverlay').classList.add('open');setTimeout(()=>document.getElementById('pwInput').focus(),80);}
+function cerrarPwModal(){document.getElementById('pwOverlay').classList.remove('open');}
+function checkPw(){
+  if(document.getElementById('pwInput').value===ADMIN_PASSWORD){
+    isAdmin=true;cerrarPwModal();activarAdmin();
+  }else{document.getElementById('pwErr').style.display='block';}
+}
+function activarAdmin(){
+  document.getElementById('banner').innerHTML=`Modo <span>Admin activado</span> — Estás editando. <button class="btn btn-sm" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);margin-left:8px" onclick="exitAdmin()">Salir</button>`;
+  document.getElementById('formAgregar').style.display='';
+  document.getElementById('tabAdd').style.display='';
+  document.getElementById('thAcciones').style.display='';
+  document.getElementById('hbtns').innerHTML=`
+    <button class="btn btn-hdr" onclick="abrirImportar()">⬆ Importar</button>
+    <button class="btn btn-hdr" onclick="window.print()">🖨 Imprimir</button>
+    <button class="btn btn-hdr" onclick="exportarCSV()">⬇ CSV</button>`;
+  renderTabs();renderTabla();
+}
+function exitAdmin(){
+  isAdmin=false;
+  document.getElementById('banner').innerHTML=`Modo <span>Solo lectura</span> — Solo el administrador puede editar. <button class="btn btn-sm btn-lock" style="margin-left:8px" onclick="showPwModal()">Ingresar como Admin</button>`;
+  document.getElementById('formAgregar').style.display='none';
+  document.getElementById('tabAdd').style.display='none';
+  document.getElementById('thAcciones').style.display='none';
+  document.getElementById('hbtns').innerHTML=`<button class="btn btn-hdr" onclick="window.print()">🖨 Imprimir</button><button class="btn btn-hdr" onclick="exportarCSV()">⬇ CSV</button>`;
+  renderTabs();renderTabla();
+}
+
+/* ------ TABS ------ */
+function renderTabs(){
+  document.getElementById('tabsDinamicos').innerHTML=tipos.map(t=>`
+    <div class="tab${vistaActiva===t.id?' active':''}" onclick="cambiarVista('${t.id}',this)">
+      ${t.label}
+      ${isAdmin?`<span class="tab-x" onclick="event.stopPropagation();pedirElimTipo('${t.id}')">✕</span>`:''}
+    </div>`).join('');
+  ['f_tipo','e_tipo','imp_tipo'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const prev=el.value;
+    el.innerHTML=tipos.map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
+    if(tipos.find(t=>t.id===prev))el.value=prev;
+  });
+}
+
+function cambiarVista(v,el){
+  vistaActiva=v;filtroActivo='TODOS';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  render();
+}
+
+/* ------ CRUD ------ */
+function agregarBoleta(){
+  const boleta=document.getElementById('f_boleta').value.trim();
+  const monto=parseFloat(document.getElementById('f_monto').value)||0;
+  const tipo=document.getElementById('f_tipo').value;
+  const cobro=document.getElementById('f_cobro').value;
+  const nota=document.getElementById('f_nota').value.trim();
+  if(!boleta){alert('Ingresa el número de boleta');return;}
+  db.push({id:Date.now()+Math.random(),boleta,monto,tipo,cobro,nota,fecha:new Date().toISOString()});
+  save(DB_KEY,db);
+  document.getElementById('f_boleta').value='';
+  document.getElementById('f_monto').value='';
+  document.getElementById('f_nota').value='';
+  render();
+}
+
+function eliminar(id){
+  if(!confirm('¿Eliminar esta boleta?'))return;
+  db=db.filter(r=>r.id!==id);save(DB_KEY,db);render();
+}
+
+function abrirEditar(id){
+  const r=db.find(x=>x.id===id);if(!r)return;
+  editandoId=id;
+  document.getElementById('e_boleta').value=r.boleta;
+  document.getElementById('e_monto').value=r.monto;
+  document.getElementById('e_tipo').value=r.tipo;
+  document.getElementById('e_cobro').value=r.cobro;
+  document.getElementById('e_nota').value=r.nota||'';
+  document.getElementById('modalEditar').classList.add('open');
+}
+
+function guardarEdicion(){
+  const idx=db.findIndex(x=>x.id===editandoId);if(idx===-1)return;
+  db[idx].boleta=document.getElementById('e_boleta').value.trim();
+  db[idx].monto=parseFloat(document.getElementById('e_monto').value)||0;
+  db[idx].tipo=document.getElementById('e_tipo').value;
+  db[idx].cobro=document.getElementById('e_cobro').value;
+  db[idx].nota=document.getElementById('e_nota').value.trim();
+  save(DB_KEY,db);cerrarModal('modalEditar');render();
+}
+
+/* ------ TIPOS ------ */
+function abrirNuevoTipo(){document.getElementById('nt_nombre').value='';document.getElementById('modalNuevoTipo').classList.add('open');setTimeout(()=>document.getElementById('nt_nombre').focus(),80);}
+function guardarNuevoTipo(){
+  const n=document.getElementById('nt_nombre').value.trim();
+  if(!n){alert('Ingresa un nombre');return;}
+  tipos.push({id:'tipo_'+Date.now(),label:n});
+  save(TIPO_KEY,tipos);cerrarModal('modalNuevoTipo');renderTabs();
+}
+function pedirElimTipo(id){
+  const t=tipos.find(x=>x.id===id);const n=db.filter(r=>r.tipo===id).length;
+  elimTipoId=id;
+  document.getElementById('elimTipoMsg').textContent=`¿Eliminar el tipo "${t?.label}"? Esto borrará también las ${n} boletas asignadas. No se puede deshacer.`;
+  document.getElementById('modalElimTipo').classList.add('open');
+}
+function confirmarElimTipo(){
+  db=db.filter(r=>r.tipo!==elimTipoId);tipos=tipos.filter(t=>t.id!==elimTipoId);
+  save(DB_KEY,db);save(TIPO_KEY,tipos);
+  cerrarModal('modalElimTipo');
+  if(vistaActiva===elimTipoId)cambiarVista('todas',document.querySelector('.tab'));
+  else render();renderTabs();
+}
+
+/* ------ IMPORTAR ------ */
+function abrirImportar(){document.getElementById('imp_data').value='';document.getElementById('modalImportar').classList.add('open');}
+function ejecutarImportar(){
+  const tipo=document.getElementById('imp_tipo').value;
+  const raw=document.getElementById('imp_data').value;
+  const filas=raw.trim().split('\n').map(l=>{
+    const p=l.split(/\t|,/).map(x=>x.trim());
+    if(!p[0])return null;
+    const monto=p.length>=3?(parseFloat(p[1])||0):0;
+    const cRaw=p.length>=3?p[2]:(p[1]||'');
+    return{id:Date.now()+Math.random(),boleta:p[0],monto,tipo,cobro:clasificarAuto(cRaw),nota:'',fecha:new Date().toISOString()};
+  }).filter(Boolean);
+  if(!filas.length){alert('No se encontraron datos válidos');return;}
+  db=db.concat(filas);save(DB_KEY,db);
+  cerrarModal('modalImportar');render();
+  alert(`✅ Se importaron ${filas.length} boletas.`);
+}
+
+function cerrarModal(id){document.getElementById(id).classList.remove('open');}
+
+/* ------ FILTROS ------ */
+function setFiltro(f){filtroActivo=f;render();}
+function filasFiltradas(){
+  let lista=vistaActiva==='todas'?db:db.filter(r=>r.tipo===vistaActiva);
+  if(filtroActivo!=='TODOS')lista=lista.filter(r=>r.cobro===filtroActivo);
+  const q=(document.getElementById('buscar')?.value||'').toLowerCase();
+  if(q)lista=lista.filter(r=>String(r.boleta).toLowerCase().includes(q)||(r.nota||'').toLowerCase().includes(q));
+  return lista;
+}
+
+/* ------ RENDER ------ */
+function render(){renderResumen();renderChips();renderTabla();renderInfo();}
+
+function renderInfo(){
+  document.getElementById('hinfo').textContent=`${db.length} boletas guardadas · ${new Date().toLocaleTimeString('es-PE')}`;
+}
+
+function renderResumen(){
+  let base=vistaActiva==='todas'?db:db.filter(r=>r.tipo===vistaActiva);
+  const counts={},totales={};
+  Object.keys(COBROS).forEach(k=>{counts[k]=0;totales[k]=0;});
+  base.forEach(r=>{counts[r.cobro]=(counts[r.cobro]||0)+1;totales[r.cobro]=(totales[r.cobro]||0)+r.monto;});
+  const totalG=base.reduce((s,r)=>s+r.monto,0);
+  document.getElementById('resumen').innerHTML=
+    Object.entries(COBROS).map(([k,cfg])=>`
+      <div class="rcard${filtroActivo===k?' active':''}" onclick="setFiltro('${k}')">
+        <div class="rcard-label" style="color:${cfg.color}">${cfg.label}</div>
+        <div class="rcard-count" style="color:${cfg.color}">${counts[k]||0}</div>
+        <div class="rcard-total" style="color:${cfg.color}">S/ ${(totales[k]||0).toFixed(2)}</div>
+      </div>`).join('')+
+    `<div class="rcard${filtroActivo==='TODOS'?' active':''}" onclick="setFiltro('TODOS')">
+      <div class="rcard-label" style="color:var(--muted)">TOTAL</div>
+      <div class="rcard-count">${base.length}</div>
+      <div class="rcard-total" style="color:var(--muted)">S/ ${totalG.toFixed(2)}</div>
+    </div>`;
+}
+
+function renderChips(){
+  let base=vistaActiva==='todas'?db:db.filter(r=>r.tipo===vistaActiva);
+  const presentes=[...new Set(base.map(r=>r.cobro))];
+  document.getElementById('chips').innerHTML=
+    ['TODOS',...presentes].map(t=>{
+      const label=t==='TODOS'?'Todos':(COBROS[t]?.label||t);
+      return`<button class="chip${filtroActivo===t?' active':''}" onclick="setFiltro('${t}')">${label}</button>`;
+    }).join('');
+}
+
+function renderTabla(){
+  const lista=filasFiltradas();
+  const tbody=document.getElementById('tbody');
+  if(!lista.length){tbody.innerHTML=`<tr><td colspan="6" class="empty">No hay boletas en esta vista.</td></tr>`;document.getElementById('tfoot').innerHTML='';return;}
+  tbody.innerHTML=lista.map(r=>{
+    const cfg=COBROS[r.cobro]||COBROS['REVISAR'];
+    const tipLabel=tipos.find(t=>t.id===r.tipo)?.label||r.tipo;
+    return`<tr>
+      <td class="mono">${r.boleta}</td>
+      <td><span class="tipo-tag">${tipLabel}</span></td>
+      <td class="monto">${r.monto>0?'S/ '+r.monto.toFixed(2):'—'}</td>
+      <td><span class="badge" style="background:${cfg.bg};color:${cfg.color};border:1px solid ${cfg.bd}">${cfg.label}</span></td>
+      <td style="color:var(--muted);font-size:11px">${r.nota||'—'}</td>
+      <td class="no-print" style="display:${isAdmin?'':'none'};white-space:nowrap">
+        <button class="btn btn-sm btn-dark" style="margin-right:4px" onclick="abrirEditar(${r.id})">✏</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminar(${r.id})">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+  const total=lista.reduce((s,r)=>s+r.monto,0);
+  document.getElementById('tfoot').innerHTML=`<tr>
+    <td colspan="2">Total · ${lista.length} boletas</td>
+    <td style="text-align:right">S/ ${total.toFixed(2)}</td>
+    <td colspan="${isAdmin?3:2}"></td>
+  </tr>`;
+}
+
+function exportarCSV(){
+  const lista=filasFiltradas();
+  const cab='Boleta,Tipo,Monto,Cobro,Nota\n';
+  const filas=lista.map(r=>`${r.boleta},${tipos.find(t=>t.id===r.tipo)?.label||r.tipo},${r.monto},${COBROS[r.cobro]?.label||r.cobro},"${r.nota||''}"`).join('\n');
+  const blob=new Blob(['\uFEFF'+cab+filas],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`boletas_${vistaActiva}_${new Date().toLocaleDateString('es-PE').replace(/\//g,'-')}.csv`;a.click();
+}
+
+renderTabs();
+render();
+</script>
+</body>
+</html>
